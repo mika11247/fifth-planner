@@ -15,6 +15,7 @@ export function PlannerList({ refreshKey }) {
   const [editType, setEditType] = useState("event");
   const [editCategory, setEditCategory] = useState("");
   const [editColor, setEditColor] = useState("#7dd3fc");
+  const [editNote, setEditNote] = useState("");
 
   async function fetchItems() {
     if (!supabase) return;
@@ -45,6 +46,7 @@ export function PlannerList({ refreshKey }) {
     setEditType(item.type || "event");
     setEditCategory(item.category || "");
     setEditColor(item.color || "#7dd3fc");
+    setEditNote(item.note || "");
   }
 
   async function updateItem(id) {
@@ -58,6 +60,7 @@ export function PlannerList({ refreshKey }) {
         type: editType,
         category: editCategory || null,
         color: editColor,
+        note: editNote || null,
       })
       .eq("id", id);
 
@@ -156,6 +159,14 @@ export function PlannerList({ refreshKey }) {
                     />
                   </div>
 
+                  <textarea
+  value={editNote}
+  onChange={(e) => setEditNote(e.target.value)}
+  placeholder="メモ"
+  rows={3}
+  className="focus-ring w-full rounded-control border border-line px-3 py-2 text-sm"
+/>
+
                   <div className="flex gap-2">
                     <button
                       onClick={() => updateItem(item.id)}
@@ -187,8 +198,13 @@ export function PlannerList({ refreshKey }) {
                       </p>
                       <p className="mt-1 text-xs text-muted">
                         {item.type || "event"}
-                        {item.category ? ` / ${item.category}` : ""}
+                        {item.category ? ` / ${item.category}` : ""}                        
                       </p>
+                      {item.note && (
+  <p className="mt-2 whitespace-pre-wrap text-sm text-muted">
+    {item.note}
+  </p>
+)}
                     </div>
                   </div>
 

@@ -1,7 +1,7 @@
 import { getMonthDays, getWeekDays, isSameDate, weekdayName } from "@/lib/date";
 import { ItemCard } from "@/components/ItemCard";
 
-export function MonthCalendar({ date, items }) {
+export function MonthCalendar({ date, items, onDateClick, onItemClick }) {
   const days = getMonthDays(date);
   const currentMonth = new Date(date).getMonth();
 
@@ -16,19 +16,45 @@ export function MonthCalendar({ date, items }) {
         {days.map((day) => {
           const dayItems = items.filter((item) => item.start_at && isSameDate(item.start_at, day));
           const muted = day.getMonth() !== currentMonth;
+          const isToday = isSameDate(day, new Date());
           return (
-            <div key={day.toISOString()} className="min-h-28 border-b border-r border-line bg-white/72 p-2 last:border-r-0">
-              <p className={`mb-2 text-xs font-semibold ${muted ? "text-muted/50" : "text-ink"}`}>
-                {day.getDate()}
-              </p>
+            <div
+  key={day.toISOString()}
+  onClick={() => onDateClick?.(day)}
+  className="min-h-28 border-b border-r border-line bg-white/72 p-2 text-left last:border-r-0 hover:bg-brand-50/60"
+>
+              <p
+  onClick={() => onDateClick?.(day)}
+  className={`mb-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-xs font-semibold ${
+    isToday
+      ? "bg-brand-500 text-white"
+      : muted
+        ? "text-muted/50"
+        : "text-ink"
+  }`}
+>
+  {day.getDate()}
+</p>
               <div className="space-y-1">
                 {dayItems.slice(0, 2).map((item) => (
-                  <div key={item.id} className="truncate rounded-control bg-brand-50 px-2 py-1 text-[11px] text-brand-700">
-                    {item.title}
-                  </div>
-                ))}
+  <button
+    key={item.id}
+    type="button"
+    onClick={(event) => {
+      event.stopPropagation();
+      onItemClick?.(item);
+    }}
+    className="block w-full truncate rounded-control px-2 py-1 text-left text-[11px] text-white"
+style={{
+  backgroundColor: item.color || "#7dd3fc",
+}}
+  >
+    {item.title}
+  </button>
+))}
               </div>
-            </div>
+            </div
+            >
           );
         })}
       </div>
@@ -60,14 +86,23 @@ export function WeekCalendar({ date, items }) {
   );
 }
 
-export function DayCalendar({ date, items }) {
+export function DayCalendar({ date, items, onItemClick }) {
   const dayItems = items.filter((item) => item.start_at && isSameDate(item.start_at, date));
 
   return (
     <section className="card p-4">
       <div className="grid gap-3">
         {dayItems.length ? (
-          dayItems.map((item) => <ItemCard key={item.id} item={item} />)
+          dayItems.map((item) => (
+  <button
+    key={item.id}
+    type="button"
+    onClick={() => onItemClick?.(item)}
+    className="block w-full text-left"
+  >
+    <ItemCard item={item} />
+  </button>
+))
         ) : (
           <p className="text-sm text-muted">今日の予定はまだありません。</p>
         )}

@@ -1,19 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/browser";
 
-export function PlannerForm({ onSaved }) {
+export function PlannerForm({ onSaved, defaultDate = "" }) {
   const supabase = createClient();
 
   const [title, setTitle] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(defaultDate);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [type, setType] = useState("event");
   const [category, setCategory] = useState("");
   const [color, setColor] = useState("#7dd3fc");
   const [message, setMessage] = useState("");
+
+  const [note, setNote] = useState("");
+
+  useEffect(() => {
+  setDate(defaultDate);
+}, [defaultDate]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -37,6 +43,7 @@ export function PlannerForm({ onSaved }) {
       type,
       category: category || null,
       color,
+      note: note || null,
     });
 
     if (error) {
@@ -46,18 +53,19 @@ export function PlannerForm({ onSaved }) {
     }
 
     setTitle("");
-    setDate("");
-    setStartTime("");
-    setEndTime("");
-    setType("event");
-    setCategory("");
-    setColor("#7dd3fc");
-    setMessage("予定を追加しました！");
-    onSaved?.();
+setDate(defaultDate || "");
+setStartTime("");
+setEndTime("");
+setType("event");
+setCategory("");
+setNote("");
+setColor("#7dd3fc");
+setMessage("予定を追加しました！");
+onSaved?.();
   }
 
   return (
-    <section className="card p-5">
+    <div>
       <h2 className="text-lg font-semibold">予定を追加</h2>
 
       <form onSubmit={handleSubmit} className="mt-4 grid gap-3">
@@ -85,6 +93,15 @@ export function PlannerForm({ onSaved }) {
           <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="カテゴリ" className="focus-ring rounded-control border border-line bg-white px-4 py-3 text-sm" />
 
           <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-12 rounded-control border border-line bg-white px-2" />
+
+          <textarea
+  value={note}
+  onChange={(e) => setNote(e.target.value)}
+  placeholder="メモ"
+  rows={4}
+  className="focus-ring w-full rounded-control border border-line bg-white px-4 py-3 text-sm"
+/>
+
         </div>
 
         <button className="focus-ring rounded-control bg-brand-500 px-4 py-3 text-sm font-semibold text-white">
@@ -93,6 +110,6 @@ export function PlannerForm({ onSaved }) {
       </form>
 
       {message && <p className="mt-3 text-sm text-muted">{message}</p>}
-    </section>
+    </div>
   );
 }
