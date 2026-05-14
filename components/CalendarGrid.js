@@ -14,7 +14,12 @@ export function MonthCalendar({ date, items, onDateClick, onItemClick }) {
       </div>
       <div className="grid grid-cols-7">
         {days.map((day) => {
-          const dayItems = items.filter((item) => item.start_at && isSameDate(item.start_at, day));
+          const dayItems = items.filter(
+  (item) =>
+    item.type === "event" &&
+    item.start_at &&
+    isSameDate(item.start_at, day)
+);
           const muted = day.getMonth() !== currentMonth;
           const isToday = isSameDate(day, new Date());
           return (
@@ -62,7 +67,15 @@ style={{
   );
 }
 
-export function WeekCalendar({ date, items }) {
+export function WeekCalendar({
+  date,
+  items,
+  onToggleComplete,
+  onDateClick,
+  onItemClick,
+  onDayAdd,
+}) {
+
   const days = getWeekDays(date);
 
   return (
@@ -70,11 +83,31 @@ export function WeekCalendar({ date, items }) {
       {days.map((day) => {
         const dayItems = items.filter((item) => item.start_at && isSameDate(item.start_at, day));
         return (
-          <div key={day.toISOString()} className="card min-h-48 p-3">
-            <p className="text-sm font-semibold">{day.getDate()}日 {weekdayName(day)}</p>
+          <div
+  key={day.toISOString()}
+  onDoubleClick={() => onDayAdd?.(day)}
+  className="card min-h-48 cursor-pointer p-3"
+>
+            <p
+  onClick={() => onDateClick?.(day)}
+  className="cursor-pointer text-sm font-semibold hover:text-brand-500"
+>
+  {day.getDate()}日 {weekdayName(day)}
+</p>
             <div className="mt-3 space-y-2">
               {dayItems.length ? (
-                dayItems.map((item) => <ItemCard key={item.id} item={item} compact />)
+                dayItems.map((item) => 
+                <div
+  key={item.id}
+  onClick={() => onItemClick?.(item)}
+  className="cursor-pointer"
+>
+  <ItemCard
+    item={item}
+    compact
+    onToggleComplete={onToggleComplete}
+  />
+</div>)
               ) : (
                 <p className="text-xs text-muted">予定なし</p>
               )}
@@ -86,7 +119,12 @@ export function WeekCalendar({ date, items }) {
   );
 }
 
-export function DayCalendar({ date, items, onItemClick }) {
+export function DayCalendar({
+  date,
+  items,
+  onItemClick,
+  onToggleComplete,
+}) {
   const dayItems = items.filter((item) => item.start_at && isSameDate(item.start_at, date));
 
   return (
@@ -94,14 +132,16 @@ export function DayCalendar({ date, items, onItemClick }) {
       <div className="grid gap-3">
         {dayItems.length ? (
           dayItems.map((item) => (
-  <button
-    key={item.id}
-    type="button"
-    onClick={() => onItemClick?.(item)}
-    className="block w-full text-left"
-  >
-    <ItemCard item={item} />
-  </button>
+  <div
+  key={item.id}
+  onClick={() => onItemClick?.(item)}
+  className="cursor-pointer"
+>
+  <ItemCard
+    item={item}
+    onToggleComplete={onToggleComplete}
+  />
+</div>
 ))
         ) : (
           <p className="text-sm text-muted">今日の予定はまだありません。</p>

@@ -56,6 +56,19 @@ export default function HomePage() {
     setPlannerItems((data || []).map(toCalendarItem));
   }
 
+  async function toggleComplete(item) {
+  if (!supabase) return;
+
+  await supabase
+    .from("planner_items")
+    .update({
+      completed: !item.completed,
+    })
+    .eq("id", item.id);
+
+  fetchPlannerItems();
+}
+
   useEffect(() => {
     fetchPlannerItems();
   }, [refreshKey]);
@@ -65,7 +78,9 @@ export default function HomePage() {
     .sort(byStartAt);
 
   const todayEvents = todayItems.filter((item) => item.type === "event");
-  const todayTasks = todayItems.filter((item) => item.type === "task");
+  const todayTasks = todayItems
+  .filter((item) => item.type === "task")
+  .sort((a, b) => Number(a.completed) - Number(b.completed));
   const sharedItems = plannerItems.filter((item) => item.group_id);
   const recentNotes = plannerItems.filter((item) => item.type === "note");
 
@@ -163,27 +178,51 @@ export default function HomePage() {
         </div>
 
         <div className="space-y-4">
-          <Widget title="今日のタスク" items={todayTasks} />
           <Widget
-            title="今週の予定"
-            items={plannerItems.filter((item) => item.type === "event").sort(byStartAt)}
-          />
-          <Widget title="共有予定" items={sharedItems} />
-          <Widget title="最近のメモ" items={recentNotes} />
+  title={`今日のタスク (${todayTasks.filter(item => !item.completed).length})`}
+  items={todayTasks}
+  onToggleComplete={toggleComplete}
+/>
+          <Widget
+  title={`今週の予定 (${plannerItems.filter(item => item.type === "event").length})`}
+  items={plannerItems
+    .filter((item) => item.type === "event")
+    .sort(byStartAt)}
+  onToggleComplete={toggleComplete}
+/>
+
+<Widget
+  title="共有予定"
+  items={sharedItems}
+  onToggleComplete={toggleComplete}
+/>
+
+<Widget
+  title="最近のメモ"
+  items={recentNotes}
+  onToggleComplete={toggleComplete}
+/>
         </div>
       </div>
     </div>
   );
 }
 
-function Widget({ title, items }) {
+function Widget({ title, items, onToggleComplete }) {
   return (
     <section className="card p-4">
       <h2 className="mb-3 text-lg font-semibold">{title}</h2>
 
       <div className="space-y-2">
         {items.length ? (
-          items.map((item) => <ItemCard key={item.id} item={item} compact />)
+          items.map((item) => (
+  <ItemCard
+    key={item.id}
+    item={item}
+    compact
+    onToggleComplete={onToggleComplete}
+  />
+))
         ) : (
           <p className="text-sm text-muted">まだありません。</p>
         )}

@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MonthCalendar } from "@/components/CalendarGrid";
+import { DayCalendar } from "@/components/CalendarGrid";
 import { FilterBar } from "@/components/FilterBar";
 import { PageHeader } from "@/components/PageHeader";
+import { formatDateLabel } from "@/lib/date";
 import { createClient } from "@/lib/supabase/browser";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { EditPlannerModal } from "@/components/EditPlannerModal";
 import { PlannerForm } from "@/components/PlannerForm";
 
 function toDateString(date) {
@@ -28,14 +30,20 @@ function toCalendarItem(item) {
   };
 }
 
-export default function MonthPage() {
+export default function DayPageClient() {
   const supabase = createClient();
-  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [items, setItems] = useState([]);
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [editingItem, setEditingItem] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState("");
+  const [showCompleted, setShowCompleted] = useState(true);
+
+  const [currentDate, setCurrentDate] = useState(() => {
+    const queryDate = searchParams.get("date");
+
+    return queryDate ? new Date(`${queryDate}T00:00:00`) : new Date();
+  });
 
   async function fetchItems() {
     if (!supabase) return;
@@ -58,11 +66,28 @@ export default function MonthPage() {
     fetchItems();
   }, []);
 
+  async function toggleComplete(item) {
+    if (!supabase) return;
+
+    await supabase
+      .from("planner_items")
+      .update({
+        completed: !item.completed,
+      })
+      .eq("id", item.id);
+
+    fetchItems();
+  }
+
+  const visibleItems = [...items]
+    .filter((item) => showCompleted || !item.completed)
+    .sort((a, b) => Number(a.completed) - Number(b.completed));
+
   return (
     <div>
       <PageHeader
-        title="マンスリー"
-        description="個人と共有グループの予定を重ねて表示する月表示です。"
+        title="デイリー"
+        description={`${formatDateLabel(currentDate)} の予定、タスク、メモです。`}
       />
 
       <div className="mb-4">
@@ -74,12 +99,12 @@ export default function MonthPage() {
           type="button"
           onClick={() => {
             const prev = new Date(currentDate);
-            prev.setMonth(prev.getMonth() - 1);
+            prev.setDate(prev.getDate() - 1);
             setCurrentDate(prev);
           }}
           className="rounded-control border border-line px-3 py-1 text-sm"
         >
-          ← 前月
+          ← 前日
         </button>
 
         <button
@@ -90,41 +115,54 @@ export default function MonthPage() {
           今日
         </button>
 
-        <h2 className="text-lg font-semibold">
-          {currentDate.getFullYear()}年{currentDate.getMonth() + 1}月
-        </h2>
-
         <button
           type="button"
           onClick={() => {
             const next = new Date(currentDate);
-            next.setMonth(next.getMonth() + 1);
+            next.setDate(next.getDate() + 1);
             setCurrentDate(next);
           }}
           className="rounded-control border border-line px-3 py-1 text-sm"
         >
-          次月 →
+          次日 →
         </button>
       </div>
 
-      <MonthCalendar
+      <div className="mb-4 flex justify-end">
+        <button
+          type="button"
+          onClick={() => setShowCompleted((prev) => !prev)}
+          className="rounded-full border border-brand-200 bg-white px-4 py-2 text-xs font-medium text-brand-600 shadow-sm"
+        >
+          {showCompleted ? "完了済みを非表示" : "完了済みも表示"}
+        </button>
+      </div>
+
+      <DayCalendar
         date={currentDate}
-        items={items}
-        onDateClick={(day) => {
-          router.push(`/calendar/day?date=${toDateString(day)}`);
-        }}
+        items={visibleItems}
+        onToggleComplete={toggleComplete}
+        onItemClick={(item) => setEditingItem(item)}
       />
 
       <button
         type="button"
-        onClick={() => {
-          setSelectedDate(toDateString(currentDate));
-          setIsOpen(true);
-        }}
+        onClick={() => setIsOpen(true)}
         className="fixed bottom-24 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-3xl text-white shadow-soft"
       >
         ＋
       </button>
+
+      {editingItem && (
+        <EditPlannerModal
+          item={editingItem}
+          onClose={() => setEditingItem(null)}
+          onSaved={() => {
+            fetchItems();
+            setEditingItem(null);
+          }}
+        />
+      )}
 
       {isOpen && (
         <div
@@ -148,7 +186,7 @@ export default function MonthPage() {
             </div>
 
             <PlannerForm
-              defaultDate={selectedDate || toDateString(currentDate)}
+              defaultDate={toDateString(currentDate)}
               onSaved={() => {
                 fetchItems();
                 setIsOpen(false);

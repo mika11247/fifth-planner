@@ -74,6 +74,19 @@ export function PlannerList({ refreshKey }) {
     fetchItems();
   }
 
+  async function toggleComplete(item) {
+  if (!supabase) return;
+
+  await supabase
+    .from("planner_items")
+    .update({
+      completed: !item.completed,
+    })
+    .eq("id", item.id);
+
+  fetchItems();
+}
+
   async function deleteItem(id) {
     if (!confirm("この予定を削除しますか？")) return;
 
@@ -189,8 +202,25 @@ export function PlannerList({ refreshKey }) {
                       className="mt-1 h-3 w-3 rounded-full"
                       style={{ backgroundColor: item.color || "#7dd3fc" }}
                     />
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium">{item.title}</p>
+                    <div className={`min-w-0 flex-1 ${
+  item.completed ? "opacity-50" : ""
+}`}>
+                      <div className="flex items-center gap-2">
+  {item.type === "task" && (
+    <input
+      type="checkbox"
+      checked={!!item.completed}
+      onChange={() => toggleComplete(item)}
+      className="h-4 w-4"
+    />
+  )}
+
+  <p className={`font-medium ${
+    item.completed ? "line-through" : ""
+  }`}>
+    {item.title}
+  </p>
+</div>
                       <p className="mt-1 text-xs text-muted">
                         {item.date || "日付なし"}
                         {item.start_time ? ` ${item.start_time.slice(0, 5)}` : ""}
@@ -207,6 +237,19 @@ export function PlannerList({ refreshKey }) {
 )}
                     </div>
                   </div>
+
+                  {item.type === "task" && (
+  <button
+    onClick={() => toggleComplete(item)}
+    className={`rounded-control px-3 py-2 text-xs font-semibold ${
+      item.completed
+        ? "bg-green-100 text-green-700"
+        : "border border-line text-ink"
+    }`}
+  >
+    {item.completed ? "完了済み" : "完了"}
+  </button>
+)}
 
                   <div className="mt-3 flex gap-2">
                     <button

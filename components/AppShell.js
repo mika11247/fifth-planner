@@ -9,6 +9,7 @@ const mainNavItems = [
   { href: "/calendar/month", label: "月" },
   { href: "/calendar/week", label: "週" },
   { href: "/calendar/day", label: "日" },
+  { href: "/tasks", label: "タスク" },
 ];
 
 const menuItems = [
@@ -78,7 +79,7 @@ export function AppShell({ children }) {
       )}
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/92 px-2 py-2 shadow-soft backdrop-blur lg:hidden">
-        <div className="mx-auto grid max-w-lg grid-cols-5 gap-1">
+        <div className="mx-auto grid max-w-lg grid-cols-6 gap-1">
           {mainNavItems.map((item) => (
             <Link
               key={item.href}
