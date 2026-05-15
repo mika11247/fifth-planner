@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { formatDateLabel } from "@/lib/date";
 import { createClient } from "@/lib/supabase/browser";
 import { useSearchParams } from "next/navigation";
+import { useSwipeable } from "react-swipeable";
 import { EditPlannerModal } from "@/components/EditPlannerModal";
 import { PlannerForm } from "@/components/PlannerForm";
 
@@ -79,12 +80,29 @@ export default function DayPageClient() {
     fetchItems();
   }
 
+  const handlers = useSwipeable({
+    onSwipedLeft: () => {
+      const next = new Date(currentDate);
+      next.setDate(next.getDate() + 1);
+      setCurrentDate(next);
+    },
+  
+    onSwipedRight: () => {
+      const prev = new Date(currentDate);
+      prev.setDate(prev.getDate() - 1);
+      setCurrentDate(prev);
+    },
+  
+    preventScrollOnSwipe: true,
+    trackMouse: false,
+  });
+
   const visibleItems = [...items]
     .filter((item) => showCompleted || !item.completed)
     .sort((a, b) => Number(a.completed) - Number(b.completed));
 
-  return (
-    <div>
+    return (
+      <div {...handlers}>
       <PageHeader
         title="デイリー"
         description={`${formatDateLabel(currentDate)} の予定、タスク、メモです。`}

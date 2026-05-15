@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/browser";
 import { useRouter } from "next/navigation";
 import { EditPlannerModal } from "@/components/EditPlannerModal";
 import { PlannerForm } from "@/components/PlannerForm";
+import { useSwipeable } from "react-swipeable";
 
 function toDateString(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
@@ -61,6 +62,23 @@ export default function WeekPage() {
     fetchItems();
   }, []);
 
+  const handlers = useSwipeable({
+    onSwipedLeft: () => {
+      const next = new Date(currentDate);
+      next.setDate(next.getDate() + 7);
+      setCurrentDate(next);
+    },
+  
+    onSwipedRight: () => {
+      const prev = new Date(currentDate);
+      prev.setDate(prev.getDate() - 7);
+      setCurrentDate(prev);
+    },
+  
+    preventScrollOnSwipe: true,
+    trackMouse: false,
+  });
+
   async function toggleComplete(item) {
     if (!supabase) return;
 
@@ -78,8 +96,8 @@ export default function WeekPage() {
     .filter((item) => showCompleted || !item.completed)
     .sort((a, b) => Number(a.completed) - Number(b.completed));
 
-  return (
-    <div>
+    return (
+      <div {...handlers}>
       <PageHeader
         title="ウィークリー"
         description="1週間の役割と予定を見渡す表示です。"

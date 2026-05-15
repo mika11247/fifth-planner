@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { createClient } from "@/lib/supabase/browser";
 import { useRouter } from "next/navigation";
 import { PlannerForm } from "@/components/PlannerForm";
+import { useSwipeable } from "react-swipeable";
 
 function toDateString(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
@@ -37,6 +38,23 @@ export default function MonthPage() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
 
+  const handlers = useSwipeable({
+    onSwipedLeft: () => {
+      const next = new Date(currentDate);
+      next.setMonth(next.getMonth() + 1);
+      setCurrentDate(next);
+    },
+  
+    onSwipedRight: () => {
+      const prev = new Date(currentDate);
+      prev.setMonth(prev.getMonth() - 1);
+      setCurrentDate(prev);
+    },
+  
+    preventScrollOnSwipe: true,
+    trackMouse: false,
+  });
+
   async function fetchItems() {
     if (!supabase) return;
 
@@ -59,7 +77,8 @@ export default function MonthPage() {
   }, []);
 
   return (
-    <div>
+    <div {...handlers}>
+      
       <PageHeader
         title="マンスリー"
         description="個人と共有グループの予定を重ねて表示する月表示です。"
